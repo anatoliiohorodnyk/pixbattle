@@ -3,7 +3,6 @@ const GRID_SIZE = 64;
 
 let isMouseOverCanvas = false;
 let isAnimating = false;
-let lastCursorState = null;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -105,29 +104,6 @@ canvas.addEventListener('click', (e) => {
         color: colorPicker.value
     });
 });
-
-function updateCursor() {
-    const rect = canvas.getBoundingClientRect();
-    const isInside = (
-        mouseX >= 0 && 
-        mouseX <= rect.width && 
-        mouseY >= 0 && 
-        mouseY <= rect.height
-    );
-    
-    if (isInside && lastCursorState !== 'crosshair') {
-        canvas.style.cursor = 'crosshair';
-        lastCursorState = 'crosshair';
-    } else if (!isInside && lastCursorState !== 'default') {
-        canvas.style.cursor = 'default';
-        lastCursorState = 'default';
-    }
-    
-    requestAnimationFrame(updateCursor);
-}
-
-// Запустити анімаційний цикл
-updateCursor();
 
 // Новий код для статистики
 socket.on('pixelUpdated', (data) => {
