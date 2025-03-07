@@ -4,7 +4,7 @@ const GRID_SIZE = 64;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
-const socket = io('http://158.180.239.114:3000' || 'http://localhost:3000');
+const socket = io('http://server:3000' || 'http://localhost:3000');
 
 canvas.width = PIXEL_SIZE * GRID_SIZE;
 canvas.height = PIXEL_SIZE * GRID_SIZE;
