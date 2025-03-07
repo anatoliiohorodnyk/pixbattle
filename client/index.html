@@ -5,8 +5,29 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="ui">
+        <!-- Меню зліва -->
+        <div class="menu">
+            <label class="grid-toggle">
+                <input type="checkbox" id="gridToggle" checked>
+                Show Grid
+            </label>
+        </div>
+        
+        <!-- Палітра праворуч -->
+        <div class="color-picker-container">
+            <input type="color" id="colorPicker">
+        </div>
+        
+        <!-- Статистика знизу -->
+        <div class="stats">
+            <div>Online: <span id="onlineCount">0</span></div>
+            <div>Your pixels: <span id="userPixels">0</span></div>
+            <div>Cursor: (<span id="cursorX">0</span>, <span id="cursorY">0</span>)</div>
+        </div>
+    </div>
+
     <canvas id="canvas"></canvas>
-    <input type="color" id="colorPicker">
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
 </body>
