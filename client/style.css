@@ -2,9 +2,6 @@ body {
     margin: 0;
     overflow: hidden;
     font-family: Arial, sans-serif;
-    height: 100vh;
-    width: 100vw;
-    background: #f0f0f0;
 }
 
 .ui {
@@ -15,29 +12,14 @@ body {
     z-index: 1;
 }
 
-#canvas {
-    image-rendering: pixelated;
-    position: fixed;
-    top: 0;
-    left: 0;
-    transition: transform 0.1s linear;
-    will-change: transform;
-    background: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-#canvas.grabbing {
-    cursor: grabbing;
-}
-
 .menu {
     position: fixed;
     top: 20px;
     left: 20px;
     background: rgba(255, 255, 255, 0.9);
-    padding: 10px 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     pointer-events: auto;
 }
 
@@ -47,8 +29,8 @@ body {
     right: 20px;
     background: rgba(255, 255, 255, 0.9);
     padding: 5px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     pointer-events: auto;
 }
 
@@ -57,39 +39,20 @@ body {
     bottom: 20px;
     left: 20px;
     background: rgba(255, 255, 255, 0.9);
-    padding: 10px 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    line-height: 1.5;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#canvas {
+    image-rendering: pixelated;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 .grid-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
-    color: #333;
-}
-
-input[type="color"] {
-    width: 40px;
-    height: 40px;
-    border: none;
-    cursor: pointer;
-}
-
-input[type="color"]::-webkit-color-swatch {
-    border-radius: 4px;
-    border: none;
-}
-
-input[type="color"]::-moz-color-swatch {
-    border-radius: 4px;
-    border: none;
-}
-
-@media (pointer: coarse) {
-    #canvas {
-        touch-action: none;
-    }
 }
