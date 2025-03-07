@@ -1,68 +1,34 @@
 const PIXEL_SIZE = 16;
 const GRID_SIZE = 64;
 
-let isMouseOverCanvas = false;
-let isAnimating = false;
-let lastCursorState = null;
-
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
 const socket = io('http://158.180.239.114:3000' || 'http://localhost:3000');
 
-// Нова змінна для лічильника
 let userPixelCount = 0;
 let showGrid = true;
+let pixels = {};
 
+// Налаштування canvas
 canvas.width = PIXEL_SIZE * GRID_SIZE;
 canvas.height = PIXEL_SIZE * GRID_SIZE;
 canvas.style.cursor = 'crosshair';
 
-// Новий код для курсора
-document.addEventListener('mousemove', (e) => {
-  if (!isMouseOverCanvas) return;
-  
-  if (!isAnimating) {
-    isAnimating = true;
-    requestAnimationFrame(() => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      // Обмеження координат
-      const x = Math.min(Math.max(Math.floor(mouseX / PIXEL_SIZE), GRID_SIZE - 1));
-      const y = Math.min(Math.max(Math.floor(mouseY / PIXEL_SIZE), GRID_SIZE - 1));
-      
-      document.getElementById('cursorX').textContent = x;
-      document.getElementById('cursorY').textContent = y;
-      
-      // Примусове оновлення
-      canvas.style.cursor = 'crosshair';
-      isAnimating = false;
-    });
-  }
+// Обробник руху миші
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
+    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+    document.getElementById('cursorX').textContent = x;
+    document.getElementById('cursorY').textContent = y;
 });
 
-canvas.addEventListener('mousemove', () => {
-    canvas.style.cursor = 'crosshair';
-  });
-
-// Новий код для сітки
+// Перемикач сітки
 document.getElementById('gridToggle').addEventListener('change', (e) => {
     showGrid = e.target.checked;
     draw();
 });
-
-// Обробники входу/виходу
-canvas.addEventListener('mouseenter', () => {
-    isMouseOverCanvas = true;
-    canvas.style.cursor = 'crosshair';
-  });
-  
-  canvas.addEventListener('mouseleave', () => {
-    isMouseOverCanvas = false;
-    canvas.style.cursor = 'default';
-  });
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -73,10 +39,9 @@ function draw() {
         const y = Math.floor(index / GRID_SIZE) * PIXEL_SIZE;
         ctx.fillStyle = color;
         ctx.fillRect(x, y, PIXEL_SIZE, PIXEL_SIZE);
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // Скидання трансформацій
     });
 
-    // Новий код для сітки
+    // Сітка
     if(showGrid) {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
         ctx.lineWidth = 1;
@@ -106,30 +71,12 @@ canvas.addEventListener('click', (e) => {
     });
 });
 
-function updateCursor() {
-    const rect = canvas.getBoundingClientRect();
-    const isInside = (
-        mouseX >= 0 && 
-        mouseX <= rect.width && 
-        mouseY >= 0 && 
-        mouseY <= rect.height
-    );
-    
-    if (isInside && lastCursorState !== 'crosshair') {
-        canvas.style.cursor = 'crosshair';
-        lastCursorState = 'crosshair';
-    } else if (!isInside && lastCursorState !== 'default') {
-        canvas.style.cursor = 'default';
-        lastCursorState = 'default';
-    }
-    
-    requestAnimationFrame(updateCursor);
-}
+// Сокет-події
+socket.on('init', (initialPixels) => {
+    pixels = initialPixels;
+    draw();
+});
 
-// Запустити анімаційний цикл
-updateCursor();
-
-// Новий код для статистики
 socket.on('pixelUpdated', (data) => {
     if(data.userId === socket.id) {
         userPixelCount++;
@@ -139,12 +86,8 @@ socket.on('pixelUpdated', (data) => {
     draw();
 });
 
-socket.on('init', (initialPixels) => {
-    pixels = initialPixels;
-    draw();
-});
-
-// Новий код для лічильника онлайн
 socket.on('usersCount', (count) => {
     document.getElementById('onlineCount').textContent = count;
 });
+
+draw();
