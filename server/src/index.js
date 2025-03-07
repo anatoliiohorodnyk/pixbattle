@@ -23,11 +23,13 @@ const io = socketIo(server, {
 // Обробка пікселів
 io.on('connection', async (socket) => {
   // Відправляємо початковий стан
+  console.log('Client connected:', socket.id); // <--- Додати
   const pixels = await redis.get('pixels');
   socket.emit('init', JSON.parse(pixels || '{}'));
 
   // Оновлення пікселя
   socket.on('updatePixel', async (data) => {
+    console.log('Received pixel:', data); // <--- Додати
     await redis.set('pixels', JSON.stringify({
       ...JSON.parse(await redis.get('pixels') || {}),
       [data.index]: data.color

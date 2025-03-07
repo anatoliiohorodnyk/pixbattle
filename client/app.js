@@ -1,5 +1,5 @@
 const PIXEL_SIZE = 16;
-const GRID_SIZE = 64;
+const GRID_SIZE = 640;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -28,6 +28,7 @@ canvas.addEventListener('click', (e) => {
     const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
     const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
     const index = y * GRID_SIZE + x;
+    console.log('Sending:', {index, color: colorPicker.value}); // <--- Додати
     
     socket.emit('updatePixel', {
         index: index,
