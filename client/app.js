@@ -29,8 +29,8 @@ document.addEventListener('mousemove', (e) => {
       const mouseY = e.clientY - rect.top;
       
       // Обмеження координат
-      const x = Math.min(Math.max(Math.floor(mouseX / PIXEL_SIZE), GRID_SIZE - 1));
-      const y = Math.min(Math.max(Math.floor(mouseY / PIXEL_SIZE), GRID_SIZE - 1));
+      const x = Math.min(Math.max(Math.floor(mouseX / PIXEL_SIZE), GRID_SIZE - 1);
+      const y = Math.min(Math.max(Math.floor(mouseY / PIXEL_SIZE), GRID_SIZE - 1);
       
       document.getElementById('cursorX').textContent = x;
       document.getElementById('cursorY').textContent = y;
