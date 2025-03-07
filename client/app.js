@@ -26,7 +26,7 @@ function draw() {
 canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
-    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE;
+    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
     const index = y * GRID_SIZE + x;
     
     socket.emit('updatePixel', {
