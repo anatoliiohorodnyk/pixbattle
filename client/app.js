@@ -2,7 +2,6 @@ const PIXEL_SIZE = 16;
 const GRID_SIZE = 64;
 
 let isMouseOverCanvas = false;
-let isAnimating = false;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -19,30 +18,20 @@ canvas.style.cursor = 'crosshair';
 
 // Новий код для курсора
 document.addEventListener('mousemove', (e) => {
-  if (!isMouseOverCanvas) return;
+    if (!isMouseOverCanvas) return;
   
-  if (!isAnimating) {
-    isAnimating = true;
-    requestAnimationFrame(() => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      // Обмеження координат
-      const x = Math.min(Math.max(Math.floor(mouseX / PIXEL_SIZE), GRID_SIZE - 1);
-      const y = Math.min(Math.max(Math.floor(mouseY / PIXEL_SIZE), GRID_SIZE - 1);
-      
-      document.getElementById('cursorX').textContent = x;
-      document.getElementById('cursorY').textContent = y;
-      
-      // Примусове оновлення
-      canvas.style.cursor = 'crosshair';
-      isAnimating = false;
-    });
-  }
-});
-
-canvas.addEventListener('mousemove', () => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Оновлення координат
+    const x = Math.floor(mouseX / PIXEL_SIZE);
+    const y = Math.floor(mouseY / PIXEL_SIZE);
+    
+    document.getElementById('cursorX').textContent = x;
+    document.getElementById('cursorY').textContent = y;
+    
+    // Примусове оновлення курсора
     canvas.style.cursor = 'crosshair';
   });
 
@@ -52,7 +41,7 @@ document.getElementById('gridToggle').addEventListener('change', (e) => {
     draw();
 });
 
-// Обробники входу/виходу
+// Обробники для відстеження входу/виходу з canvas
 canvas.addEventListener('mouseenter', () => {
     isMouseOverCanvas = true;
     canvas.style.cursor = 'crosshair';
