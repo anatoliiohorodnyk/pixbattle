@@ -10,7 +10,7 @@ services:
     build: ./server
     environment:
       - REDIS_URL=redis://redis:6379
-      - CLIENT_URL=http://158.180.239.114
+      - CLIENT_URL=http://client:80
     ports:
       - "3000:3000"
     depends_on:
@@ -21,7 +21,7 @@ services:
   client:
     build: ./client
     environment:
-      - SERVER_URL=http://158.180.239.114:3000
+      - SERVER_URL=http://server:3000
     ports:
       - "80:80"
     depends_on:
