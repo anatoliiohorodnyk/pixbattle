@@ -15,10 +15,18 @@ canvas.height = PIXEL_SIZE * GRID_SIZE;
 canvas.style.cursor = 'crosshair';
 
 // Новий код для курсора
-canvas.addEventListener('mousemove', (e) => {
+document.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
-    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Обмеження координат в межах canvas
+    const clampedX = Math.max(0, Math.min(mouseX, canvas.width - 1));
+    const clampedY = Math.max(0, Math.min(mouseY, canvas.height - 1));
+    
+    const x = Math.floor(clampedX / PIXEL_SIZE);
+    const y = Math.floor(clampedY / PIXEL_SIZE);
+    
     document.getElementById('cursorX').textContent = x;
     document.getElementById('cursorY').textContent = y;
 });
@@ -38,6 +46,7 @@ function draw() {
         const y = Math.floor(index / GRID_SIZE) * PIXEL_SIZE;
         ctx.fillStyle = color;
         ctx.fillRect(x, y, PIXEL_SIZE, PIXEL_SIZE);
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Скидання трансформацій
     });
 
     // Новий код для сітки
