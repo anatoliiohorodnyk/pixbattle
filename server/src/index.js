@@ -29,13 +29,25 @@ io.on('connection', async (socket) => {
 
   // Оновлення пікселя
   socket.on('updatePixel', async (data) => {
-    console.log('Received pixel:', data); // <--- Додати
-    await redis.set('pixels', JSON.stringify({
-      ...JSON.parse(await redis.get('pixels') || {}),
-      [data.index]: data.color
-    }));
+    console.log('Received pixel:', data);
+    
+    // Отримуємо поточні дані з Redis
+    const currentData = await redis.get('pixels');
+    let pixels = {};
+    
+    try {
+        pixels = JSON.parse(currentData || '{}');
+    } catch (e) {
+        console.error('Redis data corrupted, resetting:', e);
+        await redis.set('pixels', '{}');
+    }
+    
+    // Оновлюємо дані
+    const newPixels = {...pixels, [data.index]: data.color};
+    // Зберігаємо назад у Redis
+    await redis.set('pixels', JSON.stringify(newPixels));
     io.emit('pixelUpdated', data);
-  });
+});
 });
 
 // Health check для Docker/K8s
