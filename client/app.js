@@ -1,6 +1,8 @@
 const PIXEL_SIZE = 16;
 const GRID_SIZE = 64;
 
+let isMouseOverCanvas = false;
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
@@ -16,26 +18,39 @@ canvas.style.cursor = 'crosshair';
 
 // Новий код для курсора
 document.addEventListener('mousemove', (e) => {
+    if (!isMouseOverCanvas) return;
+  
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // Обмеження координат в межах canvas
-    const clampedX = Math.max(0, Math.min(mouseX, canvas.width - 1));
-    const clampedY = Math.max(0, Math.min(mouseY, canvas.height - 1));
-    
-    const x = Math.floor(clampedX / PIXEL_SIZE);
-    const y = Math.floor(clampedY / PIXEL_SIZE);
+    // Оновлення координат
+    const x = Math.floor(mouseX / PIXEL_SIZE);
+    const y = Math.floor(mouseY / PIXEL_SIZE);
     
     document.getElementById('cursorX').textContent = x;
     document.getElementById('cursorY').textContent = y;
-});
+    
+    // Примусове оновлення курсора
+    canvas.style.cursor = 'crosshair';
+  });
 
 // Новий код для сітки
 document.getElementById('gridToggle').addEventListener('change', (e) => {
     showGrid = e.target.checked;
     draw();
 });
+
+// Обробники для відстеження входу/виходу з canvas
+canvas.addEventListener('mouseenter', () => {
+    isMouseOverCanvas = true;
+    canvas.style.cursor = 'crosshair';
+  });
+  
+  canvas.addEventListener('mouseleave', () => {
+    isMouseOverCanvas = false;
+    canvas.style.cursor = 'default';
+  });
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

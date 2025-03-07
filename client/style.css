@@ -2,6 +2,7 @@ body {
     margin: 0;
     overflow: hidden;
     font-family: Arial, sans-serif;
+    cursor: default !important;
 }
 
 .ui {
@@ -49,6 +50,7 @@ body {
     position: fixed;
     top: 0;
     left: 0;
+    cursor: crosshair !important;
 }
 
 .grid-toggle {
