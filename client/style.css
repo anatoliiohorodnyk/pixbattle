@@ -1,56 +1,26 @@
 body {
+    cursor: default !important;  /* Фіксує курсор для всього документу */
     margin: 0;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    cursor: default !important;
 }
 
-.ui {
-    position: fixed;
-    pointer-events: none;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+.ui * {
+    pointer-events: none !important; /* Вимикає взаємодію з усіма елементами UI */
 }
 
-.menu {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    pointer-events: auto;
-}
-
-.color-picker-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 5px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    pointer-events: auto;
-}
-
+.color-picker-container, 
+.menu, 
 .stats {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    pointer-events: auto !important; /* Вмикає взаємодію для цих елементів */
+    z-index: 1;                     /* Переконуємось, що вони над canvas */
 }
 
 #canvas {
-    image-rendering: pixelated;
+    cursor: crosshair !important;    /* Примусово фіксує курсор */
+    image-rendering: pixelated;      /* Забезпечує піксельну графіку */
     position: fixed;
     top: 0;
     left: 0;
-    cursor: crosshair !important;
+    z-index: 0;                     /* Canvas під UI елементами */
 }
 
 .grid-toggle {
