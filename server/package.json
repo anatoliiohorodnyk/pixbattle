@@ -1,0 +1,13 @@
+{
+    "name": "pixmap-server",
+    "version": "1.0.0",
+    "main": "src/index.js",
+    "scripts": {
+      "start": "node src/index.js"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "ioredis": "^6.1.2",
+      "socket.io": "^4.7.2"
+    }
+  }
