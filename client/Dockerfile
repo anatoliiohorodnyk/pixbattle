@@ -1,11 +1,8 @@
 # Використовуємо офіційний nginx образ з Alpine
 FROM nginx:alpine
 
-# Видаляємо дефолтну конфігурацію nginx
-RUN rm /etc/nginx/conf.d/default.conf
-
 # Копіюємо нашу конфігурацію
-COPY nginx.conf /etc/nginx/conf.d
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Копіюємо статичні файли
 COPY . /usr/share/nginx/html

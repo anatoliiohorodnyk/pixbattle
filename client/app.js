@@ -7,7 +7,8 @@ let pixels = {};  // Ініціалізуємо pixels як пустий об'є
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
-const socket = io(window.location.hostname === 'localhost' ? 'http://localhost' : 'http://158.180.239.114');
+const cursorPos = document.getElementById('cursorPos');
+const socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
 
 // Додаємо обробку помилок підключення
 socket.on('connect_error', (error) => {
@@ -99,6 +100,14 @@ canvas.addEventListener('click', (e) => {
         index: index,
         color: colorPicker.value
     });
+});
+
+// Відображення позиції курсора
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
+    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+    cursorPos.textContent = `${x}, ${y}`;
 });
 
 // Новий код для статистики

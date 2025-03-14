@@ -1,34 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pixel Map</title>
+    <title>PixBattle</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
 </head>
 <body>
-    <div class="ui">
-        <!-- Меню зліва -->
-        <div class="menu">
-            <label class="grid-toggle">
-                <input type="checkbox" id="gridToggle" checked>
-                Show Grid
-            </label>
+    <div class="container">
+        <div class="sidebar">
+            <input type="color" id="colorPicker" value="#000000">
+            <div class="stats">
+                <div>Online: <span id="onlineCount">0</span></div>
+                <div>Your pixels: <span id="userPixels">0</span></div>
+                <div>Position: <span id="cursorPos">0, 0</span></div>
+            </div>
         </div>
-        
-        <!-- Палітра праворуч -->
-        <div class="color-picker-container">
-            <input type="color" id="colorPicker">
-        </div>
-        
-        <!-- Статистика знизу -->
-        <div class="stats">
-            <div>Online: <span id="onlineCount">0</span></div>
-            <div>Your pixels: <span id="userPixels">0</span></div>
-            <div>Cursor: (<span id="cursorX">0</span>, <span id="cursorY">0</span>)</div>
-        </div>
+        <canvas id="canvas"></canvas>
     </div>
-
-    <canvas id="canvas"></canvas>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.js" defer></script>
-    <script src="app.js" defer></script>
+    <script src="app.js"></script>
 </body>
 </html>

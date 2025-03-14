@@ -1,37 +1,23 @@
+version: '3'
 services:
   redis:
     image: redis:alpine
     volumes:
       - redis_data:/data
-    networks:
-      - pixelnet
 
   server:
     build: ./server
     environment:
       - REDIS_URL=redis://redis:6379
-      - CLIENT_URL=http://158.180.239.114
-    ports:
-      - "3000:3000"
     depends_on:
       - redis
-    networks:
-      - pixelnet
 
   client:
     build: ./client
-    environment:
-      - SERVER_URL=http://server:3000
     ports:
       - "80:80"
     depends_on:
       - server
-    networks:
-      - pixelnet
 
 volumes:
-  redis_data:
-
-networks:
-  pixelnet:
-    driver: bridge
+  redis_data: 
