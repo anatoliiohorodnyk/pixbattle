@@ -1,34 +1,56 @@
 const PIXEL_SIZE = 16;
 const GRID_SIZE = 64;
 
+let isMouseOverCanvas = false;
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
 const socket = io('http://158.180.239.114:3000' || 'http://localhost:3000');
 
+// Нова змінна для лічильника
 let userPixelCount = 0;
 let showGrid = true;
-let pixels = {};
 
-// Налаштування canvas
 canvas.width = PIXEL_SIZE * GRID_SIZE;
 canvas.height = PIXEL_SIZE * GRID_SIZE;
 canvas.style.cursor = 'crosshair';
 
-// Обробник руху миші
-canvas.addEventListener('mousemove', (e) => {
+// Новий код для курсора
+document.addEventListener('mousemove', (e) => {
+    if (!isMouseOverCanvas) return;
+  
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
-    const y = Math.floor((e.clientY - rect.top) / PIXEL_SIZE);
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Оновлення координат
+    const x = Math.floor(mouseX / PIXEL_SIZE);
+    const y = Math.floor(mouseY / PIXEL_SIZE);
+    
     document.getElementById('cursorX').textContent = x;
     document.getElementById('cursorY').textContent = y;
-});
+    
+    // Примусове оновлення курсора
+    canvas.style.cursor = 'crosshair';
+  });
 
-// Перемикач сітки
+// Новий код для сітки
 document.getElementById('gridToggle').addEventListener('change', (e) => {
     showGrid = e.target.checked;
     draw();
 });
+
+// Обробники для відстеження входу/виходу з canvas
+canvas.addEventListener('mouseenter', () => {
+    isMouseOverCanvas = true;
+    canvas.style.cursor = 'crosshair';
+  });
+  
+  canvas.addEventListener('mouseleave', () => {
+    isMouseOverCanvas = false;
+    canvas.style.cursor = 'default';
+  });
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -39,9 +61,10 @@ function draw() {
         const y = Math.floor(index / GRID_SIZE) * PIXEL_SIZE;
         ctx.fillStyle = color;
         ctx.fillRect(x, y, PIXEL_SIZE, PIXEL_SIZE);
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Скидання трансформацій
     });
 
-    // Сітка
+    // Новий код для сітки
     if(showGrid) {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
         ctx.lineWidth = 1;
@@ -71,12 +94,7 @@ canvas.addEventListener('click', (e) => {
     });
 });
 
-// Сокет-події
-socket.on('init', (initialPixels) => {
-    pixels = initialPixels;
-    draw();
-});
-
+// Новий код для статистики
 socket.on('pixelUpdated', (data) => {
     if(data.userId === socket.id) {
         userPixelCount++;
@@ -86,8 +104,12 @@ socket.on('pixelUpdated', (data) => {
     draw();
 });
 
+socket.on('init', (initialPixels) => {
+    pixels = initialPixels;
+    draw();
+});
+
+// Новий код для лічильника онлайн
 socket.on('usersCount', (count) => {
     document.getElementById('onlineCount').textContent = count;
 });
-
-draw();
