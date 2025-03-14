@@ -47,7 +47,18 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: crosshair;
+            cursor: none;
+        }
+        .custom-cursor {
+            width: 16px;
+            height: 16px;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
         }
         .button {
             width: 100%;
@@ -67,6 +78,7 @@
 </head>
 <body>
     <div class="container">
+        <div class="custom-cursor"></div>
         <div class="sidebar">
             <div class="controls">
                 <input type="color" id="colorPicker" value="#000000">
@@ -97,6 +109,7 @@
             const clearButton = document.getElementById('clearButton');
             const toggleGridButton = document.getElementById('toggleGridButton');
             const downloadButton = document.getElementById('downloadButton');
+            const customCursor = document.querySelector('.custom-cursor');
 
             let pixels = {};
             let userPixelCount = 0;
@@ -180,12 +193,21 @@
                     currentMousePos = coords;
                     cursorPos.textContent = `${coords.x}, ${coords.y}`;
                     requestAnimationFrame(draw);
+                    
+                    // Оновлюємо позицію кастомного курсора
+                    customCursor.style.left = e.clientX + 'px';
+                    customCursor.style.top = e.clientY + 'px';
                 }
+            });
+
+            canvas.addEventListener('mouseenter', () => {
+                customCursor.style.display = 'block';
             });
 
             canvas.addEventListener('mouseleave', () => {
                 currentMousePos = { x: -1, y: -1 };
                 requestAnimationFrame(draw);
+                customCursor.style.display = 'none';
             });
 
             canvas.addEventListener('click', (e) => {
