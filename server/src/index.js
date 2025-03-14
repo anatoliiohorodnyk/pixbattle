@@ -6,10 +6,14 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+    path: '/socket.io',
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
-    }
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['websocket'],
+    allowEIO3: true
 });
 
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
