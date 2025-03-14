@@ -144,12 +144,26 @@
                 const mouseX = currentMousePos.x * PIXEL_SIZE;
                 const mouseY = currentMousePos.y * PIXEL_SIZE;
                 
+                // Малюємо тінь
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 4;
+                
+                // Малюємо зовнішню рамку
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(mouseX, mouseY, PIXEL_SIZE, PIXEL_SIZE);
                 
-                // Додаємо підсвітку
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                // Малюємо внутрішню рамку
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(mouseX + 1, mouseY + 1, PIXEL_SIZE - 2, PIXEL_SIZE - 2);
+                
+                // Скидаємо тінь
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                
+                // Додаємо напівпрозору заливку
+                ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
                 ctx.fillRect(mouseX, mouseY, PIXEL_SIZE, PIXEL_SIZE);
             }
 
