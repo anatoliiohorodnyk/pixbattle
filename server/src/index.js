@@ -5,23 +5,14 @@ const http = require('http');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*"
-    }
-});
+const io = new Server(server);
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redis = new Redis(process.env.REDIS_URL);
 const port = process.env.PORT || 3000;
 
 let usersCount = 0;
 
-redis.on('error', (error) => {
-    console.error('Redis error:', error);
-});
-
 io.on('connection', async (socket) => {
-    console.log('New client connected:', socket.id);
     usersCount++;
     io.emit('usersCount', usersCount);
 
@@ -29,7 +20,7 @@ io.on('connection', async (socket) => {
         const pixels = await redis.get('pixels');
         socket.emit('init', JSON.parse(pixels || '{}'));
     } catch (error) {
-        console.error('Error sending initial pixels:', error);
+        console.error('Error:', error);
         socket.emit('init', {});
     }
 
@@ -37,23 +28,16 @@ io.on('connection', async (socket) => {
         try {
             const pixels = await redis.get('pixels');
             const currentPixels = JSON.parse(pixels || '{}');
-            
-            const newPixels = {
-                ...currentPixels,
-                [data.index]: data.color
-            };
-            
+            const newPixels = { ...currentPixels, [data.index]: data.color };
             await redis.set('pixels', JSON.stringify(newPixels));
-            
             data.userId = socket.id;
             io.emit('pixelUpdated', data);
         } catch (error) {
-            console.error('Error updating pixel:', error);
+            console.error('Error:', error);
         }
     });
 
     socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
         usersCount--;
         io.emit('usersCount', usersCount);
     });
