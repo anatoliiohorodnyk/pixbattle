@@ -5,323 +5,375 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PixBattle</title>
     <style>
-        body { 
-            margin: 0; 
-            padding: 20px; 
-            font-family: Arial; 
-            background: #f5f5f5;
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #c4c4c4;
+            font-family: Arial, sans-serif;
         }
-        .container { 
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
             display: flex;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            justify-content: center;
+            align-items: center;
         }
-        .sidebar { 
+        canvas {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: none;
+        }
+        .minimap {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
             width: 200px;
+            height: 200px;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .controls {
-            margin-bottom: 20px;
-        }
-        #colorPicker {
-            width: 100%;
-            height: 40px;
-            margin-bottom: 10px;
-            border: none;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            cursor: pointer;
-        }
-        .stats {
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .stats div {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        #canvas { 
-            background: white;
-            border-radius: 8px;
+            overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: crosshair;
+        }
+        .minimap canvas {
+            width: 100%;
+            height: 100%;
         }
         .button {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            border: none;
+            position: fixed;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            background: #007bff;
-            color: white;
             cursor: pointer;
-            transition: background 0.2s;
+            font-size: 14px;
+            transition: all 0.2s;
+            user-select: none;
         }
         .button:hover {
-            background: #0056b3;
+            background: #f0f0f0;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #clearButton {
+            top: 20px;
+            left: 20px;
+        }
+        #toggleGridButton {
+            top: 20px;
+            left: 120px;
+        }
+        #downloadButton {
+            top: 20px;
+            left: 220px;
+        }
+        .cursor {
+            position: fixed;
+            pointer-events: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+            z-index: 1000;
+            mix-blend-mode: difference;
+        }
+        .cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: black;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        @keyframes pixelPlace {
+            0% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(0.8);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        @keyframes pixelHover {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-            <div class="controls">
-                <input type="color" id="colorPicker" value="#000000">
-                <button class="button" id="clearButton">Очистити</button>
-                <button class="button" id="toggleGridButton">Сітка</button>
-                <button class="button" id="downloadButton">Зберегти</button>
-            </div>
-            <div class="stats">
-                <div>Онлайн: <span id="onlineCount">0</span></div>
-                <div>Ваші пікселі: <span id="userPixels">0</span></div>
-                <div>Позиція: <span id="cursorPos">0, 0</span></div>
-            </div>
-        </div>
         <canvas id="canvas"></canvas>
     </div>
+    <div class="minimap">
+        <canvas id="minimapCanvas"></canvas>
+    </div>
+    <div class="cursor"></div>
+    <button id="clearButton" class="button">Очистити</button>
+    <button id="toggleGridButton" class="button">Сітка</button>
+    <button id="downloadButton" class="button">Зберегти</button>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const PIXEL_SIZE = 16;
-            const GRID_SIZE = 128;
-            const MIN_SCALE = 0.5;
-            const MAX_SCALE = 4;
-            const SCALE_SPEED = 0.1;
+        const GRID_SIZE = 128;
+        const PIXEL_SIZE = 5;
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 10;
+        const SCALE_SPEED = 0.001;
 
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const colorPicker = document.getElementById('colorPicker');
-            const cursorPos = document.getElementById('cursorPos');
-            const onlineCount = document.getElementById('onlineCount');
-            const userPixels = document.getElementById('userPixels');
-            const clearButton = document.getElementById('clearButton');
-            const toggleGridButton = document.getElementById('toggleGridButton');
-            const downloadButton = document.getElementById('downloadButton');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimapCanvas');
+        const minimapCtx = minimapCanvas.getContext('2d');
+        const cursor = document.querySelector('.cursor');
 
-            let pixels = {};
-            let userPixelCount = 0;
-            let showGrid = true;
-            let currentMousePos = { x: 0, y: 0 };
-            let scale = 1;
-            let offsetX = 0;
-            let offsetY = 0;
-            let isDragging = false;
-            let lastMouseX = 0;
-            let lastMouseY = 0;
+        minimapCanvas.width = GRID_SIZE;
+        minimapCanvas.height = GRID_SIZE;
 
-            canvas.width = PIXEL_SIZE * GRID_SIZE;
-            canvas.height = PIXEL_SIZE * GRID_SIZE;
+        let pixels = {};
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+        let showGrid = true;
+        let selectedColor = '#000000';
 
-            const socket = io(window.location.origin, {
-                transports: ['websocket']
-            });
+        canvas.width = GRID_SIZE * PIXEL_SIZE;
+        canvas.height = GRID_SIZE * PIXEL_SIZE;
 
-            socket.on('connect', () => console.log('Підключено до сервера'));
-            socket.on('connect_error', (error) => console.error('Помилка підключення:', error));
-
-            function applyTransform() {
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.translate(offsetX, offsetY);
-                ctx.scale(scale, scale);
-            }
-
-            function draw() {
-                applyTransform();
-                
-                // Малюємо пікселі
-                Object.entries(pixels).forEach(([index, color]) => {
-                    const x = (index % GRID_SIZE) * PIXEL_SIZE;
-                    const y = Math.floor(index / GRID_SIZE) * PIXEL_SIZE;
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x, y, PIXEL_SIZE, PIXEL_SIZE);
-                });
-
-                // Малюємо сітку
-                if (showGrid) {
-                    ctx.strokeStyle = '#eee';
-                    ctx.lineWidth = 1 / scale;
-                    for(let i = 0; i <= GRID_SIZE; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(i * PIXEL_SIZE, 0);
-                        ctx.lineTo(i * PIXEL_SIZE, canvas.height);
-                        ctx.stroke();
-                        ctx.beginPath();
-                        ctx.moveTo(0, i * PIXEL_SIZE);
-                        ctx.lineTo(canvas.width, i * PIXEL_SIZE);
-                        ctx.stroke();
-                    }
-                }
-
-                // Малюємо індикатор поточної позиції
-                const mouseX = currentMousePos.x * PIXEL_SIZE;
-                const mouseY = currentMousePos.y * PIXEL_SIZE;
-                
-                // Малюємо тінь
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                ctx.shadowBlur = 4 / scale;
-                
-                // Малюємо зовнішню рамку
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2 / scale;
-                ctx.strokeRect(mouseX, mouseY, PIXEL_SIZE, PIXEL_SIZE);
-                
-                // Малюємо внутрішню рамку
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1 / scale;
-                ctx.strokeRect(mouseX + 1/scale, mouseY + 1/scale, PIXEL_SIZE - 2/scale, PIXEL_SIZE - 2/scale);
-                
-                // Скидаємо тінь
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                
-                // Додаємо попередній перегляд кольору
-                const selectedColor = colorPicker.value + '80';
-                ctx.fillStyle = selectedColor;
-                ctx.fillRect(mouseX, mouseY, PIXEL_SIZE, PIXEL_SIZE);
-            }
-
-            function getPixelCoords(e) {
-                const rect = canvas.getBoundingClientRect();
-                const x = Math.floor(((e.clientX - rect.left - offsetX) / scale) / PIXEL_SIZE);
-                const y = Math.floor(((e.clientY - rect.top - offsetY) / scale) / PIXEL_SIZE);
-                return { x, y };
-            }
-
-            canvas.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const mouseX = e.clientX - canvas.offsetLeft;
-                const mouseY = e.clientY - canvas.offsetTop;
-                
-                const zoom = e.deltaY < 0 ? 1 + SCALE_SPEED : 1 - SCALE_SPEED;
-                const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * zoom));
-                
-                if (newScale !== scale) {
-                    // Зберігаємо позицію миші відносно контенту
-                    const pointX = (mouseX - offsetX) / scale;
-                    const pointY = (mouseY - offsetY) / scale;
-                    
-                    scale = newScale;
-                    
-                    // Оновлюємо зміщення, щоб зберегти точку під курсором
-                    offsetX = mouseX - pointX * scale;
-                    offsetY = mouseY - pointY * scale;
-                    
-                    requestAnimationFrame(draw);
-                }
-            });
-
-            canvas.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                lastMouseX = e.clientX;
-                lastMouseY = e.clientY;
-                canvas.style.cursor = 'grabbing';
-            });
-
-            canvas.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    offsetX += e.clientX - lastMouseX;
-                    offsetY += e.clientY - lastMouseY;
-                    lastMouseX = e.clientX;
-                    lastMouseY = e.clientY;
-                    requestAnimationFrame(draw);
-                } else {
-                    const coords = getPixelCoords(e);
-                    currentMousePos = coords;
-                    cursorPos.textContent = `${coords.x}, ${coords.y}`;
-                    requestAnimationFrame(draw);
-                }
-            });
-
-            canvas.addEventListener('mouseup', () => {
-                isDragging = false;
-                canvas.style.cursor = 'crosshair';
-            });
-
-            canvas.addEventListener('mouseleave', () => {
-                isDragging = false;
-                currentMousePos = { x: -1, y: -1 };
-                canvas.style.cursor = 'crosshair';
-                requestAnimationFrame(draw);
-            });
-
-            // Додаємо обробку правої кнопки миші для скасування перетягування
-            canvas.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                isDragging = false;
-                canvas.style.cursor = 'crosshair';
-            });
-
-            canvas.addEventListener('click', (e) => {
-                const { x, y } = getPixelCoords(e);
-                if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-                    socket.emit('updatePixel', {
-                        index: y * GRID_SIZE + x,
-                        color: colorPicker.value
-                    });
-                }
-            });
-
-            function throttle(func, limit) {
-                let inThrottle;
-                return function(...args) {
-                    if (!inThrottle) {
-                        func.apply(this, args);
-                        inThrottle = true;
-                        setTimeout(() => inThrottle = false, limit);
-                    }
-                }
-            }
-
-            canvas.addEventListener('mousemove', throttle((e) => {
-                const { x, y } = getPixelCoords(e);
-                cursorPos.textContent = `${x}, ${y}`;
-            }, 50));
-
-            clearButton.addEventListener('click', () => {
-                if (confirm('Ви впевнені, що хочете очистити все полотно?')) {
-                    socket.emit('clearCanvas');
-                }
-            });
-
-            toggleGridButton.addEventListener('click', () => {
-                showGrid = !showGrid;
-                draw();
-            });
-
-            downloadButton.addEventListener('click', () => {
-                const link = document.createElement('a');
-                link.download = 'pixbattle.png';
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-
-            socket.on('init', (initialPixels) => {
-                pixels = initialPixels;
-                draw();
-            });
-
-            socket.on('pixelUpdated', (data) => {
-                pixels[data.index] = data.color;
-                if (data.userId === socket.id) {
-                    userPixelCount++;
-                    userPixels.textContent = userPixelCount;
-                }
-                draw();
-            });
-
-            socket.on('canvasCleared', () => {
-                pixels = {};
-                draw();
-            });
-
-            socket.on('usersCount', (count) => {
-                onlineCount.textContent = count;
-            });
+        const socket = io({
+            path: '/socket.io',
+            transports: ['websocket'],
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
         });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            alert('Помилка підключення. Будь ласка, оновіть сторінку.');
+        });
+
+        socket.on('pixels', (data) => {
+            pixels = data;
+            draw();
+        });
+
+        socket.on('pixel', (data) => {
+            pixels[data.index] = data.color;
+            draw();
+            
+            // Анімація появи пікселя
+            const x = data.index % GRID_SIZE;
+            const y = Math.floor(data.index / GRID_SIZE);
+            const pixelX = x * PIXEL_SIZE * scale + offsetX;
+            const pixelY = y * PIXEL_SIZE * scale + offsetY;
+            
+            ctx.save();
+            ctx.translate(pixelX + PIXEL_SIZE * scale / 2, pixelY + PIXEL_SIZE * scale / 2);
+            ctx.fillStyle = data.color;
+            ctx.beginPath();
+            ctx.rect(-PIXEL_SIZE * scale / 2, -PIXEL_SIZE * scale / 2, PIXEL_SIZE * scale, PIXEL_SIZE * scale);
+            ctx.fill();
+            ctx.restore();
+            
+            // Анімація
+            const pixel = document.createElement('div');
+            pixel.style.position = 'absolute';
+            pixel.style.left = pixelX + 'px';
+            pixel.style.top = pixelY + 'px';
+            pixel.style.width = PIXEL_SIZE * scale + 'px';
+            pixel.style.height = PIXEL_SIZE * scale + 'px';
+            pixel.style.backgroundColor = data.color;
+            pixel.style.animation = 'pixelPlace 0.3s ease-out';
+            pixel.style.pointerEvents = 'none';
+            document.body.appendChild(pixel);
+            
+            setTimeout(() => {
+                document.body.removeChild(pixel);
+            }, 300);
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+
+            // Малюємо пікселі
+            Object.entries(pixels).forEach(([index, color]) => {
+                const x = index % GRID_SIZE;
+                const y = Math.floor(index / GRID_SIZE);
+                ctx.fillStyle = color;
+                ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+            });
+
+            // Малюємо сітку
+            if (showGrid) {
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = 0.5 / scale;
+                
+                for (let i = 0; i <= GRID_SIZE; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * PIXEL_SIZE, 0);
+                    ctx.lineTo(i * PIXEL_SIZE, GRID_SIZE * PIXEL_SIZE);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, i * PIXEL_SIZE);
+                    ctx.lineTo(GRID_SIZE * PIXEL_SIZE, i * PIXEL_SIZE);
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+            updateMinimap();
+        }
+
+        function updateMinimap() {
+            minimapCtx.clearRect(0, 0, GRID_SIZE, GRID_SIZE);
+            
+            // Малюємо пікселі на мініатюрі
+            Object.entries(pixels).forEach(([index, color]) => {
+                const x = index % GRID_SIZE;
+                const y = Math.floor(index / GRID_SIZE);
+                minimapCtx.fillStyle = color;
+                minimapCtx.fillRect(x, y, 1, 1);
+            });
+            
+            // Показуємо поточну видиму область
+            const viewportRect = {
+                x: -offsetX / (PIXEL_SIZE * scale),
+                y: -offsetY / (PIXEL_SIZE * scale),
+                width: canvas.width / (PIXEL_SIZE * scale),
+                height: canvas.height / (PIXEL_SIZE * scale)
+            };
+            
+            minimapCtx.strokeStyle = 'rgba(0, 123, 255, 0.8)';
+            minimapCtx.strokeRect(
+                viewportRect.x,
+                viewportRect.y,
+                viewportRect.width,
+                viewportRect.height
+            );
+        }
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const oldScale = scale;
+            scale *= Math.pow(2, -e.deltaY * SCALE_SPEED);
+            scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+
+            offsetX = mouseX - (mouseX - offsetX) * (scale / oldScale);
+            offsetY = mouseY - (mouseY - offsetY) * (scale / oldScale);
+
+            draw();
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Оновлюємо позицію курсора
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+
+            if (isDragging) {
+                offsetX += e.clientX - lastX;
+                offsetY += e.clientY - lastY;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                draw();
+            }
+
+            // Координати пікселя під курсором
+            const x = Math.floor((mouseX - offsetX) / (PIXEL_SIZE * scale));
+            const y = Math.floor((mouseY - offsetY) / (PIXEL_SIZE * scale));
+
+            // Анімація наведення на піксель
+            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                const index = y * GRID_SIZE + x;
+                const pixelX = x * PIXEL_SIZE * scale + offsetX;
+                const pixelY = y * PIXEL_SIZE * scale + offsetY;
+                
+                cursor.style.width = (PIXEL_SIZE * scale) + 'px';
+                cursor.style.height = (PIXEL_SIZE * scale) + 'px';
+                cursor.style.borderRadius = '0';
+                cursor.style.animation = 'pixelHover 1s ease-in-out infinite';
+            } else {
+                cursor.style.width = '20px';
+                cursor.style.height = '20px';
+                cursor.style.borderRadius = '50%';
+                cursor.style.animation = 'none';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const x = Math.floor((mouseX - offsetX) / (PIXEL_SIZE * scale));
+            const y = Math.floor((mouseY - offsetY) / (PIXEL_SIZE * scale));
+
+            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                const index = y * GRID_SIZE + x;
+                socket.emit('pixel', { index, color: selectedColor });
+            }
+        });
+
+        document.getElementById('clearButton').addEventListener('click', () => {
+            socket.emit('clear');
+        });
+
+        document.getElementById('toggleGridButton').addEventListener('click', () => {
+            showGrid = !showGrid;
+            draw();
+        });
+
+        document.getElementById('downloadButton').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'pixbattle.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // Початкове відображення
+        draw();
     </script>
 </body>
 </html>
