@@ -47,7 +47,7 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" style="font: 16px serif;"><text y="16">+</text><text y="15" x="-0.5" style="fill: white; stroke: black; stroke-width: 1px;">+</text></svg>') 8 8, crosshair;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" style="font: 32px serif;"><text y="32">+</text><text y="31" x="-1" style="fill: white; stroke: black; stroke-width: 2px;">+</text></svg>') 16 16, crosshair;
         }
         .button {
             width: 100%;
@@ -162,8 +162,9 @@
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 
-                // Додаємо напівпрозору заливку
-                ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
+                // Додаємо попередній перегляд кольору
+                const selectedColor = colorPicker.value + '80'; // Додаємо 50% прозорості
+                ctx.fillStyle = selectedColor;
                 ctx.fillRect(mouseX, mouseY, PIXEL_SIZE, PIXEL_SIZE);
             }
 
