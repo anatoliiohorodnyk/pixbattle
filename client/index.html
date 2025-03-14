@@ -159,6 +159,14 @@
         canvas.width = GRID_SIZE * PIXEL_SIZE;
         canvas.height = GRID_SIZE * PIXEL_SIZE;
 
+        // Ініціалізуємо полотно фоновим кольором
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                const index = y * GRID_SIZE + x;
+                pixels[index] = 'rgb(202, 227, 255)';
+            }
+        }
+
         const socket = io({
             path: '/socket.io',
             transports: ['websocket'],
@@ -357,7 +365,15 @@
         });
 
         document.getElementById('clearButton').addEventListener('click', () => {
+            // Очищуємо полотно фоновим кольором
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const index = y * GRID_SIZE + x;
+                    pixels[index] = 'rgb(202, 227, 255)';
+                }
+            }
             socket.emit('clear');
+            draw();
         });
 
         document.getElementById('toggleGridButton').addEventListener('click', () => {
