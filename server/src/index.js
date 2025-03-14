@@ -10,6 +10,9 @@ const io = new Server(server);
 const redis = new Redis(process.env.REDIS_URL);
 const port = process.env.PORT || 3000;
 
+const GRID_SIZE = 128;
+const BACKGROUND_COLOR = 'rgb(202, 227, 255)';
+
 let usersCount = 0;
 
 // Функція для логування з часовою міткою
@@ -18,28 +21,43 @@ function log(message) {
     console.log(`[${timestamp}] ${message}`);
 }
 
+// Функція для створення початкового стану полотна
+function createInitialCanvas() {
+    const pixels = {};
+    for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+            const index = y * GRID_SIZE + x;
+            pixels[index] = BACKGROUND_COLOR;
+        }
+    }
+    return pixels;
+}
+
 io.on('connection', async (socket) => {
     usersCount++;
     io.emit('usersCount', usersCount);
     log(`Новий користувач підключився (${socket.id}). Всього користувачів: ${usersCount}`);
 
     try {
-        const pixels = await redis.get('pixels');
-        socket.emit('init', JSON.parse(pixels || '{}'));
+        let pixels = await redis.get('pixels');
+        if (!pixels) {
+            pixels = JSON.stringify(createInitialCanvas());
+            await redis.set('pixels', pixels);
+        }
+        socket.emit('pixels', JSON.parse(pixels));
     } catch (error) {
         log(`Помилка при ініціалізації для ${socket.id}: ${error.message}`);
-        socket.emit('init', {});
+        socket.emit('pixels', createInitialCanvas());
     }
 
-    socket.on('updatePixel', async (data) => {
+    socket.on('pixel', async (data) => {
         try {
             const pixels = await redis.get('pixels');
             const currentPixels = JSON.parse(pixels || '{}');
             const newPixels = { ...currentPixels, [data.index]: data.color };
             await redis.set('pixels', JSON.stringify(newPixels));
             
-            data.userId = socket.id;
-            io.emit('pixelUpdated', data);
+            io.emit('pixel', data);
             log(`Оновлено піксель ${data.index} користувачем ${socket.id}`);
         } catch (error) {
             log(`Помилка при оновленні пікселя: ${error.message}`);
@@ -47,10 +65,11 @@ io.on('connection', async (socket) => {
         }
     });
 
-    socket.on('clearCanvas', async () => {
+    socket.on('clear', async () => {
         try {
-            await redis.set('pixels', '{}');
-            io.emit('canvasCleared');
+            const initialCanvas = createInitialCanvas();
+            await redis.set('pixels', JSON.stringify(initialCanvas));
+            io.emit('pixels', initialCanvas);
             log(`Полотно очищено користувачем ${socket.id}`);
         } catch (error) {
             log(`Помилка при очищенні полотна: ${error.message}`);
@@ -85,6 +104,6 @@ server.listen(port, () => {
 
 // Додаємо обробку помилок для express
 app.use((err, req, res, next) => {
-  console.error('Express error:', err);
-  res.status(500).send('Internal Server Error');
+    console.error('Express error:', err);
+    res.status(500).send('Internal Server Error');
 });
