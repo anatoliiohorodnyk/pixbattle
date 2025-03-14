@@ -259,10 +259,12 @@
 
             canvas.addEventListener('click', (e) => {
                 const { x, y } = getPixelCoords(e);
-                socket.emit('updatePixel', {
-                    index: y * GRID_SIZE + x,
-                    color: colorPicker.value
-                });
+                if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                    socket.emit('updatePixel', {
+                        index: y * GRID_SIZE + x,
+                        color: colorPicker.value
+                    });
+                }
             });
 
             function throttle(func, limit) {
