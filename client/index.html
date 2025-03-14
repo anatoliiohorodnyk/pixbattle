@@ -7,22 +7,61 @@
     <style>
         body {
             margin: 0;
-            overflow: hidden;
-            background: #c4c4c4;
-            font-family: Arial, sans-serif;
+            padding: 20px;
+            font-family: Arial;
+            background: #f5f5f5;
         }
         .container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        canvas {
+        .sidebar {
+            width: 200px;
             background: white;
+            padding: 20px;
+            border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: none;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        #colorPicker {
+            width: 100%;
+            height: 40px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .stats {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .stats div {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        #canvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: crosshair;
+        }
+        .button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .button:hover {
+            background: #0056b3;
         }
         .minimap {
             position: fixed;
@@ -35,38 +74,11 @@
             border-radius: 4px;
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
         .minimap canvas {
             width: 100%;
             height: 100%;
-        }
-        .button {
-            position: fixed;
-            padding: 8px 16px;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            user-select: none;
-        }
-        .button:hover {
-            background: #f0f0f0;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        #clearButton {
-            top: 20px;
-            left: 20px;
-        }
-        #toggleGridButton {
-            top: 20px;
-            left: 120px;
-        }
-        #downloadButton {
-            top: 20px;
-            left: 220px;
         }
         .cursor {
             position: fixed;
@@ -120,15 +132,25 @@
 </head>
 <body>
     <div class="container">
+        <div class="sidebar">
+            <div class="controls">
+                <input type="color" id="colorPicker" value="#000000">
+                <button class="button" id="clearButton">Очистити</button>
+                <button class="button" id="toggleGridButton">Сітка</button>
+                <button class="button" id="downloadButton">Зберегти</button>
+            </div>
+            <div class="stats">
+                <div>Онлайн: <span id="onlineCount">0</span></div>
+                <div>Ваші пікселі: <span id="userPixels">0</span></div>
+                <div>Позиція: <span id="cursorPos">0, 0</span></div>
+            </div>
+        </div>
         <canvas id="canvas"></canvas>
     </div>
     <div class="minimap">
         <canvas id="minimapCanvas"></canvas>
     </div>
     <div class="cursor"></div>
-    <button id="clearButton" class="button">Очистити</button>
-    <button id="toggleGridButton" class="button">Сітка</button>
-    <button id="downloadButton" class="button">Зберегти</button>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const GRID_SIZE = 128;
@@ -142,6 +164,10 @@
         const minimapCanvas = document.getElementById('minimapCanvas');
         const minimapCtx = minimapCanvas.getContext('2d');
         const cursor = document.querySelector('.cursor');
+        const colorPicker = document.getElementById('colorPicker');
+        const cursorPos = document.getElementById('cursorPos');
+        const onlineCount = document.getElementById('onlineCount');
+        const userPixels = document.getElementById('userPixels');
 
         minimapCanvas.width = GRID_SIZE;
         minimapCanvas.height = GRID_SIZE;
@@ -154,18 +180,10 @@
         let lastX = 0;
         let lastY = 0;
         let showGrid = true;
-        let selectedColor = '#000000';
+        let userPixelCount = 0;
 
         canvas.width = GRID_SIZE * PIXEL_SIZE;
         canvas.height = GRID_SIZE * PIXEL_SIZE;
-
-        // Ініціалізуємо полотно фоновим кольором
-        for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-                const index = y * GRID_SIZE + x;
-                pixels[index] = 'rgb(202, 227, 255)';
-            }
-        }
 
         const socket = io({
             path: '/socket.io',
@@ -186,6 +204,10 @@
 
         socket.on('pixel', (data) => {
             pixels[data.index] = data.color;
+            if (data.userId === socket.id) {
+                userPixelCount++;
+                userPixels.textContent = userPixelCount;
+            }
             draw();
             
             // Анімація появи пікселя
@@ -193,14 +215,6 @@
             const y = Math.floor(data.index / GRID_SIZE);
             const pixelX = x * PIXEL_SIZE * scale + offsetX;
             const pixelY = y * PIXEL_SIZE * scale + offsetY;
-            
-            ctx.save();
-            ctx.translate(pixelX + PIXEL_SIZE * scale / 2, pixelY + PIXEL_SIZE * scale / 2);
-            ctx.fillStyle = data.color;
-            ctx.beginPath();
-            ctx.rect(-PIXEL_SIZE * scale / 2, -PIXEL_SIZE * scale / 2, PIXEL_SIZE * scale, PIXEL_SIZE * scale);
-            ctx.fill();
-            ctx.restore();
             
             // Анімація
             const pixel = document.createElement('div');
@@ -217,6 +231,10 @@
             setTimeout(() => {
                 document.body.removeChild(pixel);
             }, 300);
+        });
+
+        socket.on('usersCount', (count) => {
+            onlineCount.textContent = count;
         });
 
         function draw() {
@@ -304,6 +322,7 @@
                 isDragging = true;
                 lastX = e.clientX;
                 lastY = e.clientY;
+                canvas.style.cursor = 'grabbing';
             }
         });
 
@@ -327,6 +346,7 @@
             // Координати пікселя під курсором
             const x = Math.floor((mouseX - offsetX) / (PIXEL_SIZE * scale));
             const y = Math.floor((mouseY - offsetY) / (PIXEL_SIZE * scale));
+            cursorPos.textContent = `${x}, ${y}`;
 
             // Анімація наведення на піксель
             if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
@@ -348,6 +368,12 @@
 
         document.addEventListener('mouseup', () => {
             isDragging = false;
+            canvas.style.cursor = 'crosshair';
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            canvas.style.cursor = 'crosshair';
         });
 
         canvas.addEventListener('click', (e) => {
@@ -360,20 +386,16 @@
 
             if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
                 const index = y * GRID_SIZE + x;
-                socket.emit('pixel', { index, color: selectedColor });
+                socket.emit('pixel', { 
+                    index, 
+                    color: colorPicker.value,
+                    userId: socket.id 
+                });
             }
         });
 
         document.getElementById('clearButton').addEventListener('click', () => {
-            // Очищуємо полотно фоновим кольором
-            for (let y = 0; y < GRID_SIZE; y++) {
-                for (let x = 0; x < GRID_SIZE; x++) {
-                    const index = y * GRID_SIZE + x;
-                    pixels[index] = 'rgb(202, 227, 255)';
-                }
-            }
             socket.emit('clear');
-            draw();
         });
 
         document.getElementById('toggleGridButton').addEventListener('click', () => {
