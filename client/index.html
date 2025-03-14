@@ -155,10 +155,21 @@
                 });
             });
 
-            canvas.addEventListener('mousemove', (e) => {
+            function throttle(func, limit) {
+                let inThrottle;
+                return function(...args) {
+                    if (!inThrottle) {
+                        func.apply(this, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                }
+            }
+
+            canvas.addEventListener('mousemove', throttle((e) => {
                 const { x, y } = getPixelCoords(e);
                 cursorPos.textContent = `${x}, ${y}`;
-            });
+            }, 50));
 
             clearButton.addEventListener('click', () => {
                 if (confirm('Ви впевнені, що хочете очистити все полотно?')) {
