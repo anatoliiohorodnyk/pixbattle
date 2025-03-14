@@ -47,18 +47,7 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: none;
-        }
-        .custom-cursor {
-            width: 16px;
-            height: 16px;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            mix-blend-mode: difference;
-            background: white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" style="font: 16px serif;"><text y="16">+</text><text y="15" x="-0.5" style="fill: white; stroke: black; stroke-width: 1px;">+</text></svg>') 8 8, crosshair;
         }
         .button {
             width: 100%;
@@ -78,7 +67,6 @@
 </head>
 <body>
     <div class="container">
-        <div class="custom-cursor"></div>
         <div class="sidebar">
             <div class="controls">
                 <input type="color" id="colorPicker" value="#000000">
@@ -109,7 +97,6 @@
             const clearButton = document.getElementById('clearButton');
             const toggleGridButton = document.getElementById('toggleGridButton');
             const downloadButton = document.getElementById('downloadButton');
-            const customCursor = document.querySelector('.custom-cursor');
 
             let pixels = {};
             let userPixelCount = 0;
@@ -193,21 +180,12 @@
                     currentMousePos = coords;
                     cursorPos.textContent = `${coords.x}, ${coords.y}`;
                     requestAnimationFrame(draw);
-                    
-                    // Оновлюємо позицію кастомного курсора
-                    customCursor.style.left = e.clientX + 'px';
-                    customCursor.style.top = e.clientY + 'px';
                 }
-            });
-
-            canvas.addEventListener('mouseenter', () => {
-                customCursor.style.display = 'block';
             });
 
             canvas.addEventListener('mouseleave', () => {
                 currentMousePos = { x: -1, y: -1 };
                 requestAnimationFrame(draw);
-                customCursor.style.display = 'none';
             });
 
             canvas.addEventListener('click', (e) => {
