@@ -12,43 +12,64 @@ const server = app.listen(port, () => {
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://158.180.239.114" || "http://localhost:8080",
-    methods: ["GET", "POST"]
+    origin: process.env.CLIENT_URL || "http://localhost:8080",
+    methods: ["GET", "POST"],
+    credentials: true
   }
+});
+
+// Додаємо обробку помилок Redis
+redis.on('error', (error) => {
+  console.error('Redis error:', error);
 });
 
 // Новий код для лічильника користувачів
 let usersCount = 0;
 
 io.on('connection', async (socket) => {
+  console.log('New client connected:', socket.id);
   usersCount++;
   io.emit('usersCount', usersCount);
   
   socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
     usersCount--;
     io.emit('usersCount', usersCount);
   });
 
-  const pixels = await redis.get('pixels');
-  socket.emit('init', JSON.parse(pixels || '{}'));
+  try {
+    const pixels = await redis.get('pixels');
+    const parsedPixels = JSON.parse(pixels || '{}');
+    console.log('Sending initial pixels to client:', socket.id);
+    socket.emit('init', parsedPixels);
+  } catch (error) {
+    console.error('Error sending initial pixels:', error);
+    socket.emit('init', {});
+  }
 
   socket.on('updatePixel', async (data) => {
-    const currentData = await redis.get('pixels');
-    let pixels = {};
-    
+    console.log('Updating pixel:', data);
     try {
-        pixels = JSON.parse(currentData || '{}');
-    } catch (e) {
-        console.error('Redis data corrupted, resetting:', e);
-        await redis.set('pixels', '{}');
+      const currentData = await redis.get('pixels');
+      let pixels = JSON.parse(currentData || '{}');
+      
+      data.userId = socket.id;
+      const newPixels = {...pixels, [data.index]: data.color};
+      
+      await redis.set('pixels', JSON.stringify(newPixels));
+      io.emit('pixelUpdated', data);
+      console.log('Pixel updated successfully');
+    } catch (error) {
+      console.error('Error updating pixel:', error);
+      socket.emit('error', 'Failed to update pixel');
     }
-    
-    data.userId = socket.id; // Додаємо ID користувача
-    const newPixels = {...pixels, [data.index]: data.color};
-    
-    await redis.set('pixels', JSON.stringify(newPixels));
-    io.emit('pixelUpdated', data);
   });
+});
+
+// Додаємо обробку помилок для express
+app.use((err, req, res, next) => {
+  console.error('Express error:', err);
+  res.status(500).send('Internal Server Error');
 });
 
 app.get('/health', (req, res) => res.status(200).send('OK'));
