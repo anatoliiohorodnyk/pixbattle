@@ -7,22 +7,29 @@
     <style>
         body {
             margin: 0;
-            padding: 20px;
+            overflow: hidden;
             font-family: Arial;
             background: #f5f5f5;
         }
-        .container {
-            display: flex;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            cursor: crosshair;
         }
         .sidebar {
+            position: fixed;
+            top: 20px;
+            left: 20px;
             width: 200px;
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
         .controls {
             margin-bottom: 20px;
@@ -42,12 +49,6 @@
         .stats div {
             padding: 8px 0;
             border-bottom: 1px solid #eee;
-        }
-        #canvas {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: crosshair;
         }
         .button {
             width: 100%;
@@ -131,21 +132,19 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <div class="controls">
-                <input type="color" id="colorPicker" value="#000000">
-                <button class="button" id="clearButton">Очистити</button>
-                <button class="button" id="toggleGridButton">Сітка</button>
-                <button class="button" id="downloadButton">Зберегти</button>
-            </div>
-            <div class="stats">
-                <div>Онлайн: <span id="onlineCount">0</span></div>
-                <div>Ваші пікселі: <span id="userPixels">0</span></div>
-                <div>Позиція: <span id="cursorPos">0, 0</span></div>
-            </div>
+    <canvas id="canvas"></canvas>
+    <div class="sidebar">
+        <div class="controls">
+            <input type="color" id="colorPicker" value="#000000">
+            <button class="button" id="clearButton">Очистити</button>
+            <button class="button" id="toggleGridButton">Сітка</button>
+            <button class="button" id="downloadButton">Зберегти</button>
         </div>
-        <canvas id="canvas"></canvas>
+        <div class="stats">
+            <div>Онлайн: <span id="onlineCount">0</span></div>
+            <div>Ваші пікселі: <span id="userPixels">0</span></div>
+            <div>Позиція: <span id="cursorPos">0, 0</span></div>
+        </div>
     </div>
     <div class="minimap">
         <canvas id="minimapCanvas"></canvas>
