@@ -230,11 +230,9 @@
                     requestAnimationFrame(draw);
                 } else {
                     const coords = getPixelCoords(e);
-                    if (coords.x >= 0 && coords.x < GRID_SIZE && coords.y >= 0 && coords.y < GRID_SIZE) {
-                        currentMousePos = coords;
-                        cursorPos.textContent = `${coords.x}, ${coords.y}`;
-                        requestAnimationFrame(draw);
-                    }
+                    currentMousePos = coords;
+                    cursorPos.textContent = `${coords.x}, ${coords.y}`;
+                    requestAnimationFrame(draw);
                 }
             });
 
