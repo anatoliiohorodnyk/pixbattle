@@ -13,8 +13,11 @@ const server = app.listen(port, () => {
 const io = socketIo(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true,
+    transports: ['websocket', 'polling']
+  },
+  allowEIO3: true
 });
 
 // Додаємо обробку помилок Redis
