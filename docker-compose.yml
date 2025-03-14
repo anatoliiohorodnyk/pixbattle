@@ -1,14 +1,19 @@
 version: '3'
+
 services:
   redis:
     image: redis:alpine
     volumes:
       - redis_data:/data
+    networks:
+      - app_network
 
   server:
     build: ./server
     environment:
       - REDIS_URL=redis://redis:6379
+    networks:
+      - app_network
     depends_on:
       - redis
 
@@ -16,8 +21,14 @@ services:
     build: ./client
     ports:
       - "80:80"
+    networks:
+      - app_network
     depends_on:
       - server
+
+networks:
+  app_network:
+    driver: bridge
 
 volumes:
   redis_data: 

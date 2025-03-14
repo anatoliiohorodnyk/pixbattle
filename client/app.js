@@ -8,21 +8,32 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
 const cursorPos = document.getElementById('cursorPos');
-const socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
 
-// Додаємо обробку помилок підключення
+let userPixelCount = 0;
+let showGrid = true;
+
+// Налаштування canvas
+canvas.width = PIXEL_SIZE * GRID_SIZE;
+canvas.height = PIXEL_SIZE * GRID_SIZE;
+canvas.style.cursor = 'crosshair';
+
+// Підключення до сервера
+const socket = io({
+    path: '/socket.io/',
+    transports: ['websocket', 'polling'],
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
+
+// Обробка помилок підключення
 socket.on('connect_error', (error) => {
     console.error('Connection error:', error);
     alert('Помилка підключення до сервера. Спробуйте оновити сторінку.');
 });
 
-// Нова змінна для лічильника
-let userPixelCount = 0;
-let showGrid = true;
-
-canvas.width = PIXEL_SIZE * GRID_SIZE;
-canvas.height = PIXEL_SIZE * GRID_SIZE;
-canvas.style.cursor = 'crosshair';
+socket.on('connect', () => {
+    console.log('Connected to server');
+});
 
 // Новий код для курсора
 document.addEventListener('mousemove', (e) => {
@@ -63,33 +74,31 @@ canvas.addEventListener('mouseenter', () => {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Малювання пікселів
+    // Малюємо пікселі
     Object.entries(pixels).forEach(([index, color]) => {
         const x = (index % GRID_SIZE) * PIXEL_SIZE;
         const y = Math.floor(index / GRID_SIZE) * PIXEL_SIZE;
         ctx.fillStyle = color;
         ctx.fillRect(x, y, PIXEL_SIZE, PIXEL_SIZE);
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // Скидання трансформацій
     });
 
-    // Новий код для сітки
-    if(showGrid) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.lineWidth = 1;
-        for(let i = 0; i <= GRID_SIZE; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * PIXEL_SIZE, 0);
-            ctx.lineTo(i * PIXEL_SIZE, canvas.height);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(0, i * PIXEL_SIZE);
-            ctx.lineTo(canvas.width, i * PIXEL_SIZE);
-            ctx.stroke();
-        }
+    // Малюємо сітку
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.lineWidth = 1;
+    for(let i = 0; i <= GRID_SIZE; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * PIXEL_SIZE, 0);
+        ctx.lineTo(i * PIXEL_SIZE, canvas.height);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(0, i * PIXEL_SIZE);
+        ctx.lineTo(canvas.width, i * PIXEL_SIZE);
+        ctx.stroke();
     }
 }
 
+// Обробка кліків
 canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.clientX - rect.left) / PIXEL_SIZE);
@@ -110,22 +119,21 @@ canvas.addEventListener('mousemove', (e) => {
     cursorPos.textContent = `${x}, ${y}`;
 });
 
-// Новий код для статистики
-socket.on('pixelUpdated', (data) => {
-    if(data.userId === socket.id) {
-        userPixelCount++;
-        document.getElementById('userPixels').textContent = userPixelCount;
-    }
-    pixels[data.index] = data.color;
-    draw();
-});
-
+// Socket.io події
 socket.on('init', (initialPixels) => {
     pixels = initialPixels;
     draw();
 });
 
-// Новий код для лічильника онлайн
+socket.on('pixelUpdated', (data) => {
+    pixels[data.index] = data.color;
+    if (data.userId === socket.id) {
+        userPixelCount++;
+        document.getElementById('userPixels').textContent = userPixelCount;
+    }
+    draw();
+});
+
 socket.on('usersCount', (count) => {
     document.getElementById('onlineCount').textContent = count;
 });
