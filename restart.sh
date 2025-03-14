@@ -12,6 +12,3 @@ git pull origin master
 
 # Перезапускаємо контейнери
 docker compose up --build -d
-
-# Виводимо логи
-docker compose logs -f
