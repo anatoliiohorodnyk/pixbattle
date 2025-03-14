@@ -7,7 +7,7 @@ let pixels = {};  // Ініціалізуємо pixels як пустий об'є
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const colorPicker = document.getElementById('colorPicker');
-const socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'http://158.180.239.114:3000');
+const socket = io(window.location.hostname === 'localhost' ? 'http://localhost' : 'http://158.180.239.114');
 
 // Додаємо обробку помилок підключення
 socket.on('connect_error', (error) => {
