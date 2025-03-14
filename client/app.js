@@ -17,13 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.height = PIXEL_SIZE * GRID_SIZE;
 
     // Підключення до сервера
-    const socket = io('/socket.io', {
-        path: '/socket.io',
-        transports: ['websocket'],
-        upgrade: false,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
-    });
+    const socket = io();
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
