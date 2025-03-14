@@ -12,12 +12,11 @@ const server = app.listen(port, () => {
 
 const io = socketIo(server, {
   cors: {
-    origin: "*",
+    origin: ["http://158.180.239.114", "http://localhost"],
     methods: ["GET", "POST"],
-    credentials: true,
-    transports: ['websocket', 'polling']
-  },
-  allowEIO3: true
+    allowedHeaders: ["my-custom-header"],
+    credentials: true
+  }
 });
 
 // Додаємо обробку помилок Redis
